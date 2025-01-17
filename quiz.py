@@ -3,9 +3,9 @@ import json
 import os
 
 files = {
-    "テクノロジ系": "items\\technology_questions.json",
-    "ストラテジ系": "items\\strategy_questions.json",
-    "マネジメント系": "items\\management_questions.json"
+    "テクノロジ系": "technology_questions.json",
+    "ストラテジ系": "strategy_questions.json",
+    "マネジメント系": "management_questions.json"
 }
 
 
