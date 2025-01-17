@@ -63,7 +63,7 @@ def main_page():
 
     with st.form("start_form"):
         st.radio("カテゴリを選んでね", list(files.keys()), key="selected_category")
-        st.number_input("挑戦する問題数を選んでください (1〜20):", min_value=1, max_value=20, step=1, key="num_questions")
+        st.number_input("挑戦する問題数を選んでね (1〜20):", min_value=1, max_value=20, step=1, key="num_questions")
         if st.form_submit_button("スタート！"):
             st.session_state.answers = []  # 初期化
             st.session_state.correct_count = 0
