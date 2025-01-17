@@ -3,10 +3,27 @@ import json
 import os
 
 files = {
-    "テクノロジ系": "technology_questions.json",
-    "ストラテジ系": "strategy_questions.json",
-    "マネジメント系": "management_questions.json"
+    "テクノロジ系": "items\\technology_questions.json",
+    "ストラテジ系": "items\\strategy_questions.json",
+    "マネジメント系": "items\\management_questions.json"
 }
+
+
+# ページ設定
+def set_page_config():
+    st.set_page_config(page_title="Original Quiz", layout="centered")
+    custom_style = """
+        <style>
+        #MainMenu {visibility: hidden; }
+        footer {visibility: hidden;}
+        .stButton>button {background-color: #4CAF50; color: white; border-radius: 8px; padding: 10px 20px; border: none; cursor: pointer; font-size: 16px;}
+        .stButton>button:hover {background-color: #45a049;}
+        h1 {color: #2F4F4F;}
+        h3 {color: #4682B4;}
+        .question-box {border: 2px solid #4682B4; padding: 20px; border-radius: 10px; background-color: #F0F8FF;}
+        </style>
+    """
+    st.markdown(custom_style, unsafe_allow_html=True)
 
 
 # JSONファイルの読み込み関数
@@ -25,8 +42,14 @@ def load_quiz_data(file_name):
 def initialize_session():
     if "page_id" not in st.session_state:
         st.session_state.page_id = "main"
+    if "answers" not in st.session_state:
         st.session_state.answers = []
+    if "correct_count" not in st.session_state:
         st.session_state.correct_count = 0
+    if "selected_category" not in st.session_state:
+        st.session_state.selected_category = list(files.keys())[0]  # デフォルト値を設定
+    if "num_questions" not in st.session_state:
+        st.session_state.num_questions = 5
 
 
 # ページを変更
@@ -34,24 +57,13 @@ def change_page(page_id):
     st.session_state.page_id = page_id
 
 
-# ページ設定
-def set_page_config():
-    st.set_page_config(page_title="Original Quiz")
-    hide_menu_style = """
-        <style>
-        #MainMenu {visibility: hidden; }
-        footer {visibility: hidden;}
-        </style>
-    """
-    st.markdown(hide_menu_style, unsafe_allow_html=True)
-
-
 # 最初のページ
 def main_page():
-    st.markdown("<h1 style='text-align: center;'>🚀Original Quiz🚀</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center;'>🚀 Original Quiz 🚀</h1>", unsafe_allow_html=True)
 
     with st.form("start_form"):
-        st.radio("カテゴリを選んでね", ["テクノロジ系", "ストラテジ系", "マネジメント系"], key="table_number")
+        st.radio("カテゴリを選んでね", list(files.keys()), key="selected_category")
+        st.number_input("挑戦する問題数を選んでください (1〜20):", min_value=1, max_value=20, step=1, key="num_questions")
         if st.form_submit_button("スタート！"):
             st.session_state.answers = []  # 初期化
             st.session_state.correct_count = 0
@@ -70,8 +82,10 @@ def question_page(page_num, quiz_data):
     st.markdown(f"<h1 style='text-align: center;'>第{page_num + 1}問</h1>", unsafe_allow_html=True)
     st.markdown(f"<h3 style='text-align: center;'>あと {remaining_questions} 問</h3>", unsafe_allow_html=True)
 
+    st.markdown(f"<div class='question-box'>{question}</div>", unsafe_allow_html=True)
+
     with st.form(f"form_{page_num}"):
-        st.radio(question, options, key=f"answer_{page_num}")
+        st.radio("選択肢：", options, key=f"answer_{page_num}")
         if st.form_submit_button("進む"):
             user_answer = st.session_state[f"answer_{page_num}"]
             if len(st.session_state.answers) <= page_num:
@@ -120,9 +134,9 @@ def results_page():
         result = "✅ 正解" if user_answer == correct_answer else "❌ 不正解"
 
         st.markdown(
-            f"<div style='text-align: center;'>"
-            f"第{idx}問: {question}<br>"
-            f"あなたの回答: {user_answer} / 正解: {correct_answer} ({result})"
+            f"<div style='text-align: center; border: 1px solid #4682B4; margin: 10px; padding: 10px; border-radius: 8px; background-color: #F8F8FF;'>"
+            f"<strong>第{idx}問:</strong> {question}<br>"
+            f"<strong>あなたの回答:</strong> {user_answer} / <strong>正解:</strong> {correct_answer} ({result})"
             f"</div>",
             unsafe_allow_html=True,
         )
@@ -136,15 +150,22 @@ def results_page():
 def main():
     set_page_config()
     initialize_session()
-    quiz_data = load_quiz_data()
+
+    try:
+        selected_file = files[st.session_state.selected_category]
+    except KeyError:
+        st.error("無効なカテゴリが選択されました。再度選択してください。")
+        initialize_session()
+        return
 
     if st.session_state.page_id == "main":
         main_page()
     elif st.session_state.page_id == "page_end":
         results_page()
     else:
-        page_num = int(st.session_state.page_id.replace("page", "")) - 1
-        question_page(page_num, quiz_data)
+        quiz_data = load_quiz_data(selected_file)
+        quiz_data["questions"] = quiz_data["questions"][:st.session_state.num_questions]  # 設定された問題数で制限
+        question_page(int(st.session_state.page_id.replace("page", "")) - 1, quiz_data)
 
 
 if __name__ == "__main__":
