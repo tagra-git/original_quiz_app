@@ -55,6 +55,7 @@ def initialize_session():
 # ページを変更
 def change_page(page_id):
     st.session_state.page_id = page_id
+    st.experimental_rerun()  # ページIDが変更されたら即座に再レンダリング
 
 
 # 最初のページ
